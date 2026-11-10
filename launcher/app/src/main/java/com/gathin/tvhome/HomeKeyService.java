@@ -84,6 +84,8 @@ public class HomeKeyService extends AccessibilityService {
     private boolean powerOnAlways;
     /** power_on_home: re-arms after the screen turns on; null unless the key is on. */
     private BroadcastReceiver screenOnReceiver;
+    /** wake_cec_service: starts the firmware's one-touch-play service after each screen-on. */
+    private final WakeCec wakeCec = new WakeCec(this);
     /** Stops key filtering while a game controller is connected; null unless gamepad_passthrough and key_filter, or before the unlock. */
     private GamepadPassthrough gamepads;
     /** Screen-off receiver while guard_off_in_standby is set; null otherwise. */
@@ -140,6 +142,7 @@ public class HomeKeyService extends AccessibilityService {
         if (running == this) running = null;
         stopWaitingForUnlock();
         if (screenOnReceiver != null) unregisterReceiver(screenOnReceiver);
+        wakeCec.stop();
         if (standbyExit != null) {
             try {
                 unregisterReceiver(standbyExit);
@@ -220,6 +223,7 @@ public class HomeKeyService extends AccessibilityService {
             screenOnReceiver = null;
             powerOnUntil = 0;
         }
+        wakeCec.start(config.wakeCecService);
         // home_key_service.xml subscribes to no events, so the redirects ask for window changes only when one is on.
         AccessibilityServiceInfo info = getServiceInfo();
         if (info != null && (!stockHome.isEmpty() || !powerOnLiveTv.isEmpty() || watchFront)) {

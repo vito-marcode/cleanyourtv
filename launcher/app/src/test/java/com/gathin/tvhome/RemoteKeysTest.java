@@ -164,6 +164,15 @@ public class RemoteKeysTest {
         assertFalse(RemoteKeys.isActivity(null));
     }
 
+    @Test public void anActivityTargetCarriesItsBooleanExtrasAfterAQuestionMark() {
+        assertTrue(RemoteKeys.isActivity("timvision.launcher/com.canal.ui.tv.TvMainActivity?openLive=true"));
+        assertEquals("timvision.launcher/com.canal.ui.tv.TvMainActivity",
+                RemoteKeys.activityName("timvision.launcher/com.canal.ui.tv.TvMainActivity?openLive=true"));
+        assertEquals("io.github.maxhayim.brightness/.QuickActivity",
+                RemoteKeys.activityName("io.github.maxhayim.brightness/.QuickActivity"));
+        assertEquals("a.b/.C?openLive=true", parse("172:a.b/.C?openLive=true").get(172));
+    }
+
     /** Presses with a timer the test runs by hand, and the targets they open. */
     private static final class Remote {
         final List<Runnable> holds = new ArrayList<>();

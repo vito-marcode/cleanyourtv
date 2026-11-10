@@ -74,7 +74,9 @@
          the tile switch to that TV input instead (ids from dumpsys tv_input), e.g. a Live TV tile straight to
          HDMI 1: com.mediatek.wwtv.tvcenter=input:com.mediatek.tvinput/.hdmi.HDMIInputService/HW5. "package=view:uri"
          opens that URI in the package instead (ACTION_VIEW): Bbox TV's live channels are
-         fr.bouyguestelecom.tv.bbui=view:bbox://live. -->
+         fr.bouyguestelecom.tv.bbui=view:bbox://live. "package=activity:package/.Activity?name=true" opens that
+         activity with boolean extras instead (a running app gets them as a new intent), e.g. the TIMVISION box's
+         live TV tab: timvision.launcher=activity:timvision.launcher/com.canal.ui.tv.TvMainActivity?openLive=true. -->
     <string-array name="launch_actions">
     </string-array>
 
@@ -198,7 +200,8 @@
          one chosen in the TV's settings, or the launcher's clock), settings, wifi or ignore (swallows the button: it
          does nothing, for a shortcut pressed by accident; find its scancode with `tools/tv.py 'getevent -t'`);
          e.g. KEYCODE_PROG_YELLOW:mute, scan:586:ignore and hold:KEYCODE_PROG_YELLOW:sleep. "package/.Activity" opens that activity instead of the app's launcher
-         entry, e.g. hold:191:io.github.maxhayim.brightness/.QuickActivity for an add-on's quick bar. Prefix an
+         entry, e.g. hold:191:io.github.maxhayim.brightness/.QuickActivity for an add-on's quick bar. An activity
+         can take boolean extras after a "?", joined with "&": "a.b/.C?openLive=true". Prefix an
          entry with "hold:" for the same button's long press:
          "hold:KEYCODE_BUTTON_8:org.xbmc.kodi" opens Kodi when held for half a second, while the unprefixed entry
          still opens on a tap; "hold:scan:490:..." works for scancodes. A key with only a hold entry does nothing
@@ -216,6 +219,15 @@
          Whenever that launcher's home screen comes up anyway, HomeKeyService (HOME_KEY_SERVICE=1) sends the TV
          straight back here. A theme's config.json can set it too. Leave empty to omit. -->
     <string name="stock_home_redirect" translatable="false"></string>
+
+    <!-- For boxes whose firmware does not send HDMI-CEC "TV on" when it wakes from standby, leaving the TV off
+         (Android 8 boxes whose HDMI service has no playback device yet at wake-up). "package/.Service": the
+         launcher starts that service 30 s after every screen-on, as a retry once the firmware's own attempt has
+         finished or timed out, while one of its key services (HomeKeyService or
+         InputKeyService) is on, and the firmware's own one-touch-play service does the rest. The TIM Box's is
+         com.marvell.onetouchplay/.OneTouchPlayService. It only starts a service the firmware already has; the
+         launcher gets no new permission. A theme's config.json can set it too. Leave empty to omit. -->
+    <string name="wake_cec_service" translatable="false"></string>
 
     <!-- For TVs whose firmware opens the Live TV app (live_tv_package) by itself at every power-on, with no setting
          to change it (Changhong / Homwee boards start com.mediatek.wwtv.tvcenter from its own boot receiver, which
@@ -432,6 +444,13 @@
     <!-- One line under the clock: CPU, free memory and free storage. Off by default; a theme can set
          "show_stats": true. Nothing is read, and the clock does not move, while this is false. -->
     <bool name="show_stats">false</bool>
+
+    <!-- A Continue watching row above the dock, from the system's Watch Next table (docs/watch-next.md). Read once
+         each time Home comes back, never polled. Needs READ_TV_LISTINGS, which build-and-install grants. Only
+         local posters are shown (Jellyfin's, for one); rows whose poster is a web address get the app's own
+         banner instead, so Home makes no network request. Hidden on a screen with no room above the dock.
+         Off by default. -->
+    <bool name="continue_watching">false</bool>
 
     <!-- Each team's next game in the F1 panel's place under the clock, rotating with the theme's F1 weekend: the package
          of an add-on that publishes them (the Game Day add-on: io.github.justinnewman.gameday; contract in docs/modules.md).

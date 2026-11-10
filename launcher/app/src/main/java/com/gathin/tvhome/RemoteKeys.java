@@ -352,6 +352,24 @@ final class RemoteKeys {
         return target != null && inputId(target) == null && target.indexOf('/') > 0;
     }
 
+    /** A "package/.Activity?name=true&other=false" target without its boolean extras: the activity alone. */
+    static String activityName(String target) {
+        int q = target.indexOf('?');
+        return q < 0 ? target : target.substring(0, q);
+    }
+
+    /** Adds the boolean extras after the "?" of a target ("a.b/.C?openLive=true&amp;x=false") to the intent. */
+    static Intent withExtras(Intent intent, String target) {
+        int q = target.indexOf('?');
+        if (q > 0) {
+            for (String pair : target.substring(q + 1).split("&")) {
+                int eq = pair.indexOf('=');
+                if (eq > 0) intent.putExtra(pair.substring(0, eq), Boolean.parseBoolean(pair.substring(eq + 1)));
+            }
+        }
+        return intent;
+    }
+
     /** Opens an app from a remote button: its TV entry if it has one, else its phone entry. An "input:<id>" target
      *  switches to that TV input (an HDMI port) instead, an action word runs that action, and a
      *  "package/.Activity" target opens that activity. */
@@ -388,10 +406,11 @@ final class RemoteKeys {
             }
             return;
         }
-        ComponentName activity = isActivity(pkg) ? ComponentName.unflattenFromString(pkg) : null;
+        ComponentName activity = isActivity(pkg) ? ComponentName.unflattenFromString(activityName(pkg)) : null;
         if (activity != null) {
             try {
-                ctx.startActivity(new Intent().setComponent(activity).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                ctx.startActivity(withExtras(new Intent().setComponent(activity)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), pkg));
             } catch (ActivityNotFoundException | SecurityException ignored) {
             }
             return;

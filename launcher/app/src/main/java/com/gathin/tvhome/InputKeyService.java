@@ -29,6 +29,8 @@ public class InputKeyService extends AccessibilityService {
     private boolean repairRecord;
     /** consume_volume_keys: Volume Up/Down go to VolumeKeys instead of on to the firmware. */
     private boolean consumeVolumeKeys;
+    /** wake_cec_service: starts the firmware's one-touch-play service after each screen-on. */
+    private final WakeCec wakeCec = new WakeCec(this);
     /** Stops key filtering while a game controller is connected; null unless gamepad_passthrough and key_filter. */
     private GamepadPassthrough gamepads;
 
@@ -45,6 +47,7 @@ public class InputKeyService extends AccessibilityService {
         appKeys = RemoteKeys.parseAppKeys(config.appKeys);
         appScancodes = RemoteKeys.parseAppScancodes(config.appKeys);
         RemoteKeys.applyKeyFilter(this, config.keyFilter);
+        wakeCec.start(config.wakeCecService);
         holdAppKeys = RemoteKeys.parseHoldAppKeys(config.appKeys);
         holdAppScancodes = RemoteKeys.parseHoldAppScancodes(config.appKeys);
         // gamepad_passthrough, off by default. Only with key_filter on: off, the service never filters keys.
@@ -87,6 +90,7 @@ public class InputKeyService extends AccessibilityService {
 
     @Override
     public void onDestroy() {
+        wakeCec.stop();
         if (gamepads != null) gamepads.stop();
         if (consumeVolumeKeys) VolumeKeys.stop();
         super.onDestroy();

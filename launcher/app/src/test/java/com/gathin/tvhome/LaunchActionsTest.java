@@ -33,6 +33,15 @@ public class LaunchActionsTest {
         assertEquals("bbox://live?a=b", LaunchActions.viewUri("view: bbox://live?a=b "));
     }
 
+    @Test public void activityPrefixGivesTheComponentWithItsExtras() {
+        assertEquals("timvision.launcher/com.canal.ui.tv.TvMainActivity?openLive=true",
+                LaunchActions.activityTarget("activity: timvision.launcher/com.canal.ui.tv.TvMainActivity?openLive=true"));
+        assertNull(LaunchActions.activityTarget("activity:"));
+        assertNull(LaunchActions.activityTarget("activity:nothing-to-open"));
+        assertNull(LaunchActions.activityTarget("view:bbox://live"));
+        assertNull(LaunchActions.activityTarget(null));
+    }
+
     @Test public void plainActionOrEmptyViewHasNoUri() {
         assertNull(LaunchActions.viewUri("com.telekom.onetv.tv.pl.action.PROGRAM_GUIDE"));
         assertNull(LaunchActions.viewUri("view:"));

@@ -37,8 +37,23 @@ final class LaunchActions {
         return uri.isEmpty() ? null : uri;
     }
 
-    /** The intent for a launch_actions value, limited to its package: ACTION_VIEW on the URI, or the action. */
+    private static final String ACTIVITY_PREFIX = "activity:";
+
+    /** The "package/.Activity?name=true" of an "activity:" value, or null for any other value. */
+    static String activityTarget(String value) {
+        if (value == null || !value.startsWith(ACTIVITY_PREFIX)) return null;
+        String target = value.substring(ACTIVITY_PREFIX.length()).trim();
+        return RemoteKeys.isActivity(target) ? target : null;
+    }
+
+    /** The intent for a launch_actions value, limited to its package: that activity with its boolean extras
+     *  ("activity:"), ACTION_VIEW on the URI, or the action. */
     static Intent intent(String pkg, String value) {
+        String target = activityTarget(value);
+        if (target != null) {
+            return RemoteKeys.withExtras(new Intent().setComponent(
+                    android.content.ComponentName.unflattenFromString(RemoteKeys.activityName(target))), target);
+        }
         String uri = viewUri(value);
         Intent i = uri != null ? new Intent(Intent.ACTION_VIEW, Uri.parse(uri)) : new Intent(value);
         return i.setPackage(pkg);
