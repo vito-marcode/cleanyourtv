@@ -41,9 +41,10 @@ import java.util.Set;
  * A card drawn by the accessibility service (no activity switch: the app underneath keeps playing) listens with the
  * TV's speech recogniser in Italian, then {@link VoiceCommands} decides: a channel (asked to Canali TV's provider,
  * tuned with its PLAY action), a YouTube search (opened in SmartTube), an app by name, or an action (Home, Back,
- * mute, volume, settings). The TIM remote sends audio only while its mic key is held: hold, speak, release (the
- * release ends the phrase); a second press also ends it; Back cancels. Presses and releases before the recogniser
- * is ready are ignored: the Google app may have been killed for memory and take a moment to start again.
+ * mute, volume, settings). Press (tap or hold) and speak: the recogniser ends the phrase on silence, a second press
+ * ends it at once, Back cancels. The release never ends it: the TIM v2 remote reports the mic key's release about a
+ * second after the press even while it is still held. A press before the recogniser is ready is ignored (the Google
+ * app may have been killed for memory and take a moment to start again).
  * Needs RECORD_AUDIO, granted with pm grant. Nothing is kept between commands.
  */
 final class VoiceSession implements RecognitionListener {
@@ -84,14 +85,13 @@ final class VoiceSession implements RecognitionListener {
         return current != null;
     }
 
-    /** The mic key from InputKeyService: a press starts (or, while listening, ends the phrase); a long hold's release ends it. */
+    /** The mic key from InputKeyService: a press starts a session, or ends the phrase of the one listening. */
     static boolean onKey(AccessibilityService svc, KeyEvent event) {
+        Log.i(TAG, "key " + KeyEvent.keyCodeToString(event.getKeyCode()) + (event.getAction() == KeyEvent.ACTION_DOWN
+                ? " down repeat=" + event.getRepeatCount() : " up after " + (event.getEventTime() - downAt) + " ms"));
         if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
             downAt = event.getEventTime();
             toggle(svc);
-        } else if (event.getAction() == KeyEvent.ACTION_UP && current != null && current.listening && current.ready
-                && event.getEventTime() - downAt > 800) {
-            current.recognizer.stopListening();
         }
         return true;
     }
@@ -398,7 +398,7 @@ final class VoiceSession implements RecognitionListener {
         hint.setTextColor(0xB3FFFFFF);
         hint.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
         hint.setTypeface(UiFont.get(svc, R.string.font_regular));
-        hint.setText("Tieni premuto e parla: «Metti Rai 2» · «Cerca gatti su YouTube» · «Apri Netflix»");
+        hint.setText("Parla ora: «Metti Rai 2» · «Cerca gatti su YouTube» · «Apri Netflix»");
         texts.addView(title);
         texts.addView(hint);
         row.addView(texts, tl);

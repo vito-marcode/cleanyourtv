@@ -86,6 +86,7 @@ final class VoiceCommands {
         if (s.isEmpty()) return new Command(Kind.NONE, "");
 
         String action = action(s);
+        if (action == null) action = action(bareAction(s));   // "metti la home", "metti muto", "vai alla home"
         if (action != null) return new Command(Kind.ACTION, action);
 
         Matcher m = VIDEO_AFTER.matcher(s);
@@ -103,6 +104,11 @@ final class VoiceCommands {
         m = SEARCH.matcher(s);
         if (m.matches()) return new Command(Kind.VIDEO_SEARCH, m.group(1));
         return new Command(Kind.WATCH, s);
+    }
+
+    /** The phrase without a leading verb and article: "metti la home" -> "home", so it is never taken for a channel. */
+    static String bareAction(String s) {
+        return withoutVerb(s).replaceFirst("^(?:vai |torna )?(?:alla |al |a |la |il |lo |l )", "");
     }
 
     /** The action word a whole phrase asks for, or null. */
@@ -218,7 +224,7 @@ final class VoiceCommands {
     /** What WATCH tries as an app name: the phrase without its verb ("metti netflix" -> "netflix"). */
     static String withoutVerb(String phrase) {
         String s = normalize(phrase);
-        return s.replaceFirst("^(?:metti(?:mi)?|guarda|voglio vedere|fammi vedere|vai su|passa a|passa su|cambia su|sintonizza)\\s+(?:su )?", "");
+        return s.replaceFirst("^(?:metti(?:mi)?|guarda|voglio vedere|fammi vedere|vai su|passa(?: a| su)?|cambia su|sintonizza)\\s+(?:su )?", "");
     }
 
     /** The YouTube search URL SmartTube (and YouTube) open as a results page. */
