@@ -295,7 +295,7 @@ final class RemoteKeys {
     static boolean isAction(String target) {
         switch (target) {
             case "back": case "home": case "recents": case "mute": case "sleep":
-            case "screensaver": case "settings": case "wifi": case "ignore":
+            case "screensaver": case "settings": case "wifi": case "ignore": case "voice":
                 return true;
             default:
                 return false;
@@ -330,6 +330,10 @@ final class RemoteKeys {
                 break;
             case "wifi":
                 start(ctx, SystemSettings.intent(ctx, Settings.ACTION_WIFI_SETTINGS));
+                break;
+            case "voice":
+                // The mic's voice command (VoiceSession); InputKeyService starts it on the press instead.
+                if (ctx instanceof AccessibilityService) VoiceSession.toggle((AccessibilityService) ctx);
                 break;
             default:
                 break;   // "ignore", or "sleep" below Android 9: consumed, nothing to do
