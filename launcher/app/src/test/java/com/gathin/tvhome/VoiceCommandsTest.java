@@ -24,6 +24,9 @@ public class VoiceCommandsTest {
         assertEquals("ACTION:settings", parse("apri le impostazioni"));
         assertEquals("ACTION:wifi", parse("impostazioni wi-fi"));
         assertEquals("ACTION:screensaver", parse("salvaschermo"));
+        assertEquals("ACTION:home", parse("metti la home"));     // heard on the box: was HGTV - Home&Garden
+        assertEquals("ACTION:mute", parse("metti muto"));
+        assertEquals("ACTION:home", parse("passa alla home"));
     }
 
     @Test public void video_search_goes_to_youtube() {
