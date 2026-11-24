@@ -67,6 +67,17 @@ public class InputKeyService extends AccessibilityService {
 
     @Override
     protected boolean onKeyEvent(KeyEvent event) {
+        // Voice command card up: Back closes it instead of reaching the app underneath.
+        if (VoiceSession.active() && event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+            if (event.getAction() == KeyEvent.ACTION_UP) VoiceSession.cancel();
+            return true;
+        }
+        // A key mapped to "voice" acts on its press, not on release as app_keys do: listening starts at once and a
+        // hold works as push-to-talk (VoiceSession).
+        if (VoiceSession.TARGET.equals(appScancodes.get(event.getScanCode()))
+                || VoiceSession.TARGET.equals(appKeys.get(event.getKeyCode()))) {
+            return VoiceSession.onKey(this, event);
+        }
         if (consumeVolumeKeys && VolumeKeys.handle(this, event)) return true;
         // A scancode entry is more specific than any keycode, so it goes first.
         if (RemoteKeys.handle(this, event, RemoteKeys.tap(appScancodes.get(event.getScanCode()),

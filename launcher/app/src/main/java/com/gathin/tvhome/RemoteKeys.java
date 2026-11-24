@@ -358,7 +358,7 @@ final class RemoteKeys {
     static boolean isAction(String target) {
         switch (target) {
             case "back": case "home": case "recents": case "mute": case "sleep":
-            case "screensaver": case "settings": case "wifi": case "library": case "ignore":
+            case "screensaver": case "settings": case "wifi": case "library": case "ignore": case "voice":
                 return true;
             default:
                 return false;
@@ -401,6 +401,10 @@ final class RemoteKeys {
             case "library":
                 // Home with the App library open on top; Home does nothing when app_library is off.
                 start(ctx, new Intent(ctx, MainActivity.class).setAction(MainActivity.ACTION_APP_LIBRARY));
+                break;
+            case "voice":
+                // The mic's voice command (VoiceSession); InputKeyService starts it on the press instead.
+                if (ctx instanceof AccessibilityService) VoiceSession.toggle((AccessibilityService) ctx);
                 break;
             default:
                 break;   // "ignore", or "sleep" below Android 9: consumed, nothing to do
