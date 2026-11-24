@@ -285,12 +285,24 @@ final class VoiceSession implements RecognitionListener {
     }
 
     private Result action(String word) {
+        if (word.startsWith("volume_set:")) {
+            int pct = Integer.parseInt(word.substring("volume_set:".length()));
+            AudioManager audio = svc.getSystemService(AudioManager.class);
+            return new Result("Volume al " + pct + "%", null, () -> {
+                if (audio == null) return;
+                int max = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                audio.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0);
+                audio.setStreamVolume(AudioManager.STREAM_MUSIC, Math.max(1, Math.round(max * pct / 100f)),
+                        AudioManager.FLAG_SHOW_UI);
+            }, true);
+        }
         switch (word) {
             case "volume_up": case "volume_down": {
                 int dir = word.equals("volume_up") ? AudioManager.ADJUST_RAISE : AudioManager.ADJUST_LOWER;
                 AudioManager audio = svc.getSystemService(AudioManager.class);
                 return new Result(word.equals("volume_up") ? "Alzo il volume" : "Abbasso il volume", null, () -> {
                     if (audio == null) return;
+                    audio.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0);
                     audio.adjustStreamVolume(AudioManager.STREAM_MUSIC, dir, AudioManager.FLAG_SHOW_UI);
                     audio.adjustStreamVolume(AudioManager.STREAM_MUSIC, dir, AudioManager.FLAG_SHOW_UI);
                 }, true);

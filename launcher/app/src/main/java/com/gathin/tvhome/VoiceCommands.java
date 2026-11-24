@@ -134,6 +134,22 @@ final class VoiceCommands {
             default:
                 break;
         }
+        // a level: "volume al massimo", "metti il volume a 8", "volume a meta" -> "volume_set:<0-100 %>"
+        java.util.regex.Matcher lvl = Pattern.compile(
+                "^(?:(?:metti|imposta|porta|regola)\\s+)?(?:il\\s+)?volume\\s+(?:al|a|alla|all)\\s+(.+)$").matcher(s);
+        if (lvl.matches()) {
+            String v = lvl.group(1).trim();
+            switch (v) {
+                case "massimo": case "max": case "tutto": return "volume_set:100";
+                case "minimo": case "min": return "volume_set:7";
+                case "meta": case "mezzo": return "volume_set:50";
+                default:
+                    if (v.matches("[0-9]{1,3}")) {
+                        int n = Integer.parseInt(v);       // up to 15: the box's own steps; above: percent
+                        return "volume_set:" + Math.min(100, n <= 15 ? Math.round(n * 100f / 15) : n);
+                    }
+            }
+        }
         if (s.matches("(?:alza|aumenta)(?: (?:il|un po(?: il)?))? volume(?: .*)?|volume (?:su|piu alto|piu forte)|piu forte|alza"))
             return "volume_up";
         if (s.matches("(?:abbassa|diminuisci)(?: (?:il|un po(?: il)?))? volume(?: .*)?|volume (?:giu|piu basso)|piu piano|abbassa"))
