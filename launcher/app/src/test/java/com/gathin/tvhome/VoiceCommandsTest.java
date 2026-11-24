@@ -27,6 +27,11 @@ public class VoiceCommandsTest {
         assertEquals("ACTION:home", parse("metti la home"));     // heard on the box: was HGTV - Home&Garden
         assertEquals("ACTION:mute", parse("metti muto"));
         assertEquals("ACTION:home", parse("passa alla home"));
+        assertEquals("ACTION:volume_set:100", parse("Metti il volume al massimo"));   // heard on the box
+        assertEquals("ACTION:volume_set:50", parse("volume a metà"));
+        assertEquals("ACTION:volume_set:53", parse("metti il volume a 8"));
+        assertEquals("ACTION:volume_set:40", parse("volume al 40"));
+        assertEquals("ACTION:volume_set:7", parse("volume al minimo"));
     }
 
     @Test public void video_search_goes_to_youtube() {
