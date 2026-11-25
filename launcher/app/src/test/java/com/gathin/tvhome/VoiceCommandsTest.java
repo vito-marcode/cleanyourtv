@@ -42,6 +42,8 @@ public class VoiceCommandsTest {
         assertEquals("VIDEO_SEARCH:ricette di pasta", parse("cerca ricette di pasta"));
         assertEquals("VIDEO_SEARCH:vasco rossi", parse("cerca un video di Vasco Rossi"));
         assertEquals("VIDEO_SEARCH:gatti", parse("guarda gatti su smarttube"));
+        assertEquals("VIDEO_SEARCH:recensione samsung galaxy fold 8",
+                parse("Cerca recensione Samsung Galaxy Fold 8 su"));   // heard on the box, "YouTube" dropped
     }
 
     @Test public void open_and_watch() {
