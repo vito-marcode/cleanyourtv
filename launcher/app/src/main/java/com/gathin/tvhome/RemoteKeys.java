@@ -195,6 +195,8 @@ final class RemoteKeys {
             });
         }
         String button = event.getDeviceId() + ":" + event.getKeyCode() + ":" + event.getScanCode();
+        // push-to-talk: the release of a key whose hold started the voice command ends the phrase
+        if (event.getAction() == KeyEvent.ACTION_UP && VoiceSession.TARGET.equals(holdApp)) VoiceSession.keyReleased();
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
             presses.down(button, event.getEventTime(), event.getRepeatCount(), holdApp, target -> launch(ctx, target));
         } else if (event.getAction() == KeyEvent.ACTION_UP) {
@@ -332,8 +334,9 @@ final class RemoteKeys {
                 start(ctx, SystemSettings.intent(ctx, Settings.ACTION_WIFI_SETTINGS));
                 break;
             case "voice":
-                // The mic's voice command (VoiceSession); InputKeyService starts it on the press instead.
-                if (ctx instanceof AccessibilityService) VoiceSession.toggle((AccessibilityService) ctx);
+                // The mic's voice command (VoiceSession). Reached from a "hold:" entry (a tap "voice" key goes through
+                // InputKeyService/HomeKeyService on its press instead): push-to-talk, the release ends the phrase.
+                if (ctx instanceof AccessibilityService) VoiceSession.startHeld((AccessibilityService) ctx);
                 break;
             case "launcher":
                 // This launcher's home screen, as HomeKeyService opens it for Home: lets "KEYCODE_HOME:launcher" keep the
