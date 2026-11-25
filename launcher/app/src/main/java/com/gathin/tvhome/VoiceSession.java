@@ -78,6 +78,8 @@ final class VoiceSession implements RecognitionListener {
     private boolean listening;
     /** onReadyForSpeech came: stopListening() before it cancels the request with nothing heard. */
     private boolean ready;
+    /** Volume lowered while listening (-1: untouched), and the level it was lowered to. */
+    private int duckedFrom = -1, duckedTo = -1;
     private final Runnable watchdog = this::close;
 
     private VoiceSession(AccessibilityService svc) {
@@ -121,6 +123,27 @@ final class VoiceSession implements RecognitionListener {
 
     // ---------------------------------------------------------------- session
 
+    /** While listening, the TV's sound down to a quarter, so it doesn't cover the voice. */
+    private void duck() {
+        AudioManager audio = svc.getSystemService(AudioManager.class);
+        if (audio == null) return;
+        int vol = audio.getStreamVolume(AudioManager.STREAM_MUSIC);
+        if (vol <= 2) return;
+        duckedFrom = vol;
+        duckedTo = Math.max(1, vol / 4);
+        audio.setStreamVolume(AudioManager.STREAM_MUSIC, duckedTo, 0);
+    }
+
+    /** Back to the volume before listening, unless the user changed it meanwhile. */
+    private void unduck() {
+        if (duckedFrom < 0) return;
+        AudioManager audio = svc.getSystemService(AudioManager.class);
+        if (audio != null && audio.getStreamVolume(AudioManager.STREAM_MUSIC) == duckedTo) {
+            audio.setStreamVolume(AudioManager.STREAM_MUSIC, duckedFrom, 0);
+        }
+        duckedFrom = -1;
+    }
+
     private void start() {
         show();
         main.postDelayed(watchdog, 20_000);
@@ -136,6 +159,7 @@ final class VoiceSession implements RecognitionListener {
         recognizer = google != null ? SpeechRecognizer.createSpeechRecognizer(svc, google)
                 : SpeechRecognizer.createSpeechRecognizer(svc);
         recognizer.setRecognitionListener(this);
+        duck();
         recognizer.startListening(new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
                 .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
                 .putExtra(RecognizerIntent.EXTRA_LANGUAGE, "it-IT")
@@ -161,6 +185,7 @@ final class VoiceSession implements RecognitionListener {
 
     private void stopRecognizer() {
         listening = false;
+        unduck();                                       // the sound comes back as soon as listening ends
         if (recognizer != null) {
             recognizer.setRecognitionListener(null);
             recognizer.destroy();
