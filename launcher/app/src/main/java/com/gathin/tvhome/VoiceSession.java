@@ -292,6 +292,12 @@ final class VoiceSession implements RecognitionListener {
                 Result ch = channel(asChannel);
                 return ch != null ? ch : fail("Non trovo «" + cmd.arg + "»");
             }
+            case NAME: {
+                VoiceCommands.App app = VoiceCommands.findApp(cmd.arg, apps());
+                if (app != null) return openApp(app);
+                Result ch = channel(heard);
+                return ch != null ? ch : fail("Non ho capito «" + first + "»");
+            }
             case WATCH: {
                 Result ch = channel(heard);
                 if (ch != null) return ch;

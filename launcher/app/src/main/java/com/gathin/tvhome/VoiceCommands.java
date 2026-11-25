@@ -17,13 +17,19 @@ import java.util.regex.Pattern;
  *   <li>{@link Kind#VIDEO_SEARCH}: "cerca gatti su youtube", "youtube gatti", "cerca ricette di pasta"
  *       (a bare "cerca" searches videos; arg: the search text);</li>
  *   <li>{@link Kind#OPEN}: "apri netflix", "avvia spotify" (arg: the app's spoken name; a channel if no app);</li>
- *   <li>{@link Kind#WATCH}: anything else, "metti rai 2", "il canale 5", "netflix" (arg: the whole phrase; the
- *       session asks Canali TV whether it names a channel, then tries it as an app name).</li>
+ *   <li>{@link Kind#WATCH}: a channel verb, "metti rai 2", "il canale 5", "guarda la7" (arg: the whole phrase; the
+ *       session asks Canali TV whether it names a channel, then tries it as an app name);</li>
+ *   <li>{@link Kind#NAME}: no verb, "sky", "netflix", "rai 2" (arg: the phrase; an app of that name first, then a
+ *       channel: "sky" opens the Sky app, "metti sky" tunes Sky TG24).</li>
  * </ul>
  */
 final class VoiceCommands {
 
-    enum Kind { ACTION, VIDEO_SEARCH, OPEN, WATCH, NONE }
+    enum Kind { ACTION, VIDEO_SEARCH, OPEN, WATCH, NAME, NONE }
+
+    /** A leading channel verb: the phrase asks for a channel first (WATCH), not an app (NAME). */
+    private static final Pattern CHANNEL_VERB = Pattern.compile(
+            "^(?:metti(?:mi)?|guarda|voglio vedere|fammi vedere|sintonizza|passa|cambia|vai su|vai sul|il canale|canale)\\b.*");
 
     static final class Command {
         final Kind kind;
@@ -103,7 +109,7 @@ final class VoiceCommands {
         }
         m = SEARCH.matcher(s);
         if (m.matches()) return new Command(Kind.VIDEO_SEARCH, searchText(m.group(1)));
-        return new Command(Kind.WATCH, s);
+        return new Command(CHANNEL_VERB.matcher(s).matches() ? Kind.WATCH : Kind.NAME, s);
     }
 
     /** The phrase without a leading verb and article: "metti la home" -> "home", so it is never taken for a channel. */
