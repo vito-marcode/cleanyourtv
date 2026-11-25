@@ -59,6 +59,8 @@ final class VoiceCommands {
             + "(?:(?:su|in|con)\\s+" + YT + "\\s+|" + YT + "\\s+)(.+)$");
     private static final Pattern VIDEO_AFTER = Pattern.compile(
             "^(?:cerca(?:mi)?|trova(?:mi)?|metti|guarda|riproduci|fammi vedere|voglio vedere)\\s+(.+?)\\s+(?:su|in|con)\\s+" + YT + "$");
+    /** "recensione galaxy fold 8 su youtube": no verb, but "on YouTube" at the end is a video search all the same. */
+    private static final Pattern VIDEO_NO_VERB = Pattern.compile("^(.+?)\\s+(?:su|in|con)\\s+" + YT + "$");
     private static final Pattern SEARCH = Pattern.compile("^(?:cerca(?:mi)?|trova(?:mi)?|ricerca)\\s+(?:(?:un |il |i )?video\\s+(?:di |su )?)?(.+)$");
     private static final Pattern OPEN = Pattern.compile(
             "^(?:apri(?:mi)?|avvia|lancia|fai partire|vai su|vai in|vai a|entra in|accendi)\\s+(?:l |la |il |lo |le |gli |i )?(?:app |applicazione )?(.+)$");
@@ -98,6 +100,8 @@ final class VoiceCommands {
         Matcher m = VIDEO_AFTER.matcher(s);
         if (m.matches()) return new Command(Kind.VIDEO_SEARCH, searchText(m.group(1)));
         m = VIDEO.matcher(s);
+        if (m.matches()) return new Command(Kind.VIDEO_SEARCH, searchText(m.group(1)));
+        m = VIDEO_NO_VERB.matcher(s);
         if (m.matches()) return new Command(Kind.VIDEO_SEARCH, searchText(m.group(1)));
 
         m = OPEN.matcher(s);
