@@ -53,7 +53,12 @@ public class VoiceCommandsTest {
         assertEquals("WATCH:metti rai 2", parse("Metti Rai 2"));
         assertEquals("WATCH:metti rai due", parse("metti rai due per favore"));
         assertEquals("WATCH:il canale 5", parse("il canale 5"));
-        assertEquals("WATCH:netflix", parse("Netflix"));
+        assertEquals("WATCH:canale 5", parse("Canale 5"));
+        assertEquals("WATCH:guarda la7", parse("guarda la7"));
+        assertEquals("NAME:netflix", parse("Netflix"));
+        assertEquals("NAME:sky", parse("Sky"));                     // heard on the box: was Sky TG24
+        assertEquals("WATCH:metti sky", parse("metti Sky"));
+        assertEquals("NAME:rai 2", parse("Rai 2"));
         assertEquals("NONE:", parse("grazie"));
     }
 
