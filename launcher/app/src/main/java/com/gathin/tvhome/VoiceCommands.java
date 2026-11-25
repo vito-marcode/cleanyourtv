@@ -90,9 +90,9 @@ final class VoiceCommands {
         if (action != null) return new Command(Kind.ACTION, action);
 
         Matcher m = VIDEO_AFTER.matcher(s);
-        if (m.matches()) return new Command(Kind.VIDEO_SEARCH, m.group(1));
+        if (m.matches()) return new Command(Kind.VIDEO_SEARCH, searchText(m.group(1)));
         m = VIDEO.matcher(s);
-        if (m.matches()) return new Command(Kind.VIDEO_SEARCH, m.group(1));
+        if (m.matches()) return new Command(Kind.VIDEO_SEARCH, searchText(m.group(1)));
 
         m = OPEN.matcher(s);
         if (m.matches()) {
@@ -102,13 +102,19 @@ final class VoiceCommands {
             return new Command(Kind.OPEN, what);
         }
         m = SEARCH.matcher(s);
-        if (m.matches()) return new Command(Kind.VIDEO_SEARCH, m.group(1));
+        if (m.matches()) return new Command(Kind.VIDEO_SEARCH, searchText(m.group(1)));
         return new Command(Kind.WATCH, s);
     }
 
     /** The phrase without a leading verb and article: "metti la home" -> "home", so it is never taken for a channel. */
     static String bareAction(String s) {
         return withoutVerb(s).replaceFirst("^(?:vai |torna )?(?:alla |al |a |la |il |lo |l )", "");
+    }
+
+    /** The search text without a dangling preposition: the recogniser sometimes drops the final "YouTube"
+     *  ("cerca recensione galaxy fold 8 su"). */
+    static String searchText(String q) {
+        return q.replaceFirst("(?:\\s+(?:su|sul|in|con|di|da)(?:\\s+you)?)+$", "").trim();
     }
 
     /** The action word a whole phrase asks for, or null. */
