@@ -61,9 +61,6 @@ final class VoiceSession implements RecognitionListener {
             "com.teamsmart.videomanager.tv", "com.liskovsoft.smarttubetv.beta", "com.liskovsoft.smarttubetv",
             "com.google.android.youtube.tv"};
 
-    /** How long listening goes on after a push-to-talk key comes up. */
-    private static final long RELEASE_TAIL_MS = 400;
-
     private static VoiceSession current;
     private static long downAt;
     /** The last key event handled: HomeKeyService and InputKeyService both get every key when both are enabled. */
@@ -137,8 +134,7 @@ final class VoiceSession implements RecognitionListener {
         VoiceSession s = current;
         if (s == null || !s.held || !s.listening) return;
         s.held = false;
-        // the key often comes up on the last word: keep listening a moment so it arrives whole ("metti Rai" without the 3)
-        if (s.ready) s.main.postDelayed(() -> { if (current == s && s.listening && s.recognizer != null) s.recognizer.stopListening(); }, RELEASE_TAIL_MS);
+        if (s.ready) s.recognizer.stopListening();
         else s.done("Tieni premuto mentre parli", null, 1500);
     }
 
