@@ -39,13 +39,14 @@ public class VoiceCommandsTest {
         assertEquals("VIDEO_SEARCH:gatti", parse("Cerca su YouTube gatti"));
         assertEquals("VIDEO_SEARCH:gatti divertenti", parse("youtube gatti divertenti"));
         assertEquals("VIDEO_SEARCH:la ricetta della carbonara", parse("metti la ricetta della carbonara su youtube"));
-        assertEquals("VIDEO_SEARCH:ricette di pasta", parse("cerca ricette di pasta"));
+        assertEquals("WEB_SEARCH:ricette di pasta", parse("cerca ricette di pasta"));     // no app named: Google search
+        assertEquals("WEB_SEARCH:montalbano", parse("cerca Montalbano"));
         assertEquals("VIDEO_SEARCH:vasco rossi", parse("cerca un video di Vasco Rossi"));
         assertEquals("VIDEO_SEARCH:gatti", parse("guarda gatti su smarttube"));
         assertEquals("VIDEO_SEARCH:recensione galaxy fold 8",
                 parse("recensione Galaxy Fold 8 su YouTube"));          // heard on the box: tuned TV8
-        assertEquals("VIDEO_SEARCH:recensione samsung galaxy fold 8",
-                parse("Cerca recensione Samsung Galaxy Fold 8 su"));   // heard on the box, "YouTube" dropped
+        assertEquals("WEB_SEARCH:recensione samsung galaxy fold 8",
+                parse("Cerca recensione Samsung Galaxy Fold 8 su"));   // "YouTube" dropped: no app named, Google search
     }
 
     @Test public void music_search_goes_to_spotify() {
