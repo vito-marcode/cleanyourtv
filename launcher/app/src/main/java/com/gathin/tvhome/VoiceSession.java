@@ -303,7 +303,10 @@ final class VoiceSession implements RecognitionListener {
         String first = VoiceCommands.bestPhrase(heard);
         VoiceCommands.Command cmd = VoiceCommands.parse(first);
         // "<something> su <app>": that app, searching for it when the app takes a search (before any channel lookup)
-        if (cmd.kind == VoiceCommands.Kind.NAME || cmd.kind == VoiceCommands.Kind.WATCH || cmd.kind == VoiceCommands.Kind.OPEN) {
+        // ("cerca doc su raiplay" too: a "cerca" phrase is a YouTube search only when it names YouTube or no app)
+        boolean namesYoutube = VoiceCommands.normalize(first).matches(".*\\b(?:youtube|you tube|smarttube|smart tube)\\b.*");
+        if (cmd.kind == VoiceCommands.Kind.NAME || cmd.kind == VoiceCommands.Kind.WATCH || cmd.kind == VoiceCommands.Kind.OPEN
+                || cmd.kind == VoiceCommands.Kind.WEB_SEARCH || (cmd.kind == VoiceCommands.Kind.VIDEO_SEARCH && !namesYoutube)) {
             String[] in = VoiceCommands.inApp(first);
             VoiceCommands.App app = in == null ? null : VoiceCommands.findApp(in[1], apps());
             if (app != null) return searchIn(app, in[0]);
@@ -317,6 +320,13 @@ final class VoiceSession implements RecognitionListener {
                 Intent view = new Intent(Intent.ACTION_VIEW, Uri.parse(VoiceCommands.youtubeSearchUrl(cmd.arg)))
                         .setPackage(pkg).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 return new Result("Cerco «" + cmd.arg + "»", "su YouTube", () -> start(view), true);
+            }
+            case WEB_SEARCH: {
+                // the TV's Google search (Katniss), results from every app, as the Google key gives
+                Intent search = new Intent("android.search.action.GLOBAL_SEARCH")
+                        .putExtra(android.app.SearchManager.QUERY, cmd.arg).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                if (svc.getPackageManager().resolveActivity(search, 0) == null) return fail("Ricerca non disponibile");
+                return new Result("Cerco «" + cmd.arg + "»", "con Google", () -> start(search), true);
             }
             case MUSIC_SEARCH: {
                 String pkg = firstInstalled(MUSIC_APPS);

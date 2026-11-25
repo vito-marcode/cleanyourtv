@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
  */
 final class VoiceCommands {
 
-    enum Kind { ACTION, VIDEO_SEARCH, MUSIC_SEARCH, OPEN, WATCH, NAME, NONE }
+    enum Kind { ACTION, VIDEO_SEARCH, MUSIC_SEARCH, WEB_SEARCH, OPEN, WATCH, NAME, NONE }
 
     /** "vasco rossi su spotify", "metti gli 883 su spotify": a Spotify search (spotify:search:, which plays the top hit). */
     private static final Pattern MUSIC = Pattern.compile(
@@ -65,7 +65,10 @@ final class VoiceCommands {
             "^(?:cerca(?:mi)?|trova(?:mi)?|metti|guarda|riproduci|fammi vedere|voglio vedere)\\s+(.+?)\\s+(?:su|in|con)\\s+" + YT + "$");
     /** "recensione galaxy fold 8 su youtube": no verb, but "on YouTube" at the end is a video search all the same. */
     private static final Pattern VIDEO_NO_VERB = Pattern.compile("^(.+?)\\s+(?:su|in|con)\\s+" + YT + "$");
-    private static final Pattern SEARCH = Pattern.compile("^(?:cerca(?:mi)?|trova(?:mi)?|ricerca)\\s+(?:(?:un |il |i )?video\\s+(?:di |su )?)?(.+)$");
+    /** "cerca un video di vasco rossi": a video, so YouTube. */
+    private static final Pattern SEARCH_VIDEO = Pattern.compile("^(?:cerca(?:mi)?|trova(?:mi)?|ricerca)\\s+(?:un |il |i |dei )?video\\s+(?:di |su |del |della )?(.+)$");
+    /** "cerca montalbano": no app named, the TV's Google search (results from every app). */
+    private static final Pattern SEARCH = Pattern.compile("^(?:cerca(?:mi)?|trova(?:mi)?|ricerca)\\s+(.+)$");
     private static final Pattern OPEN = Pattern.compile(
             "^(?:apri(?:mi)?|avvia|lancia|fai partire|vai su|vai in|vai a|entra in|accendi)\\s+(?:l |la |il |lo |le |gli |i )?(?:app |applicazione )?(.+)$");
 
@@ -117,8 +120,10 @@ final class VoiceCommands {
             if (inner != null) return new Command(Kind.ACTION, inner);
             return new Command(Kind.OPEN, what);
         }
-        m = SEARCH.matcher(s);
+        m = SEARCH_VIDEO.matcher(s);
         if (m.matches()) return new Command(Kind.VIDEO_SEARCH, searchText(m.group(1)));
+        m = SEARCH.matcher(s);
+        if (m.matches()) return new Command(Kind.WEB_SEARCH, searchText(m.group(1)));
         return new Command(CHANNEL_VERB.matcher(s).matches() ? Kind.WATCH : Kind.NAME, s);
     }
 
