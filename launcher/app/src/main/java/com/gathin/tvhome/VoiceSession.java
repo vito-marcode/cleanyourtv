@@ -78,8 +78,6 @@ final class VoiceSession implements RecognitionListener {
     private boolean listening;
     /** onReadyForSpeech came: stopListening() before it cancels the request with nothing heard. */
     private boolean ready;
-    /** Started by a held key (push-to-talk): the key's release ends the phrase. */
-    private boolean held;
     /** Volume lowered while listening (-1: untouched), and the level it was lowered to. */
     private int duckedFrom = -1, duckedTo = -1;
     private final Runnable watchdog = this::close;
@@ -116,26 +114,6 @@ final class VoiceSession implements RecognitionListener {
         }
         current = new VoiceSession(svc);
         current.start();
-    }
-
-    /**
-     * A "hold:" entry's voice command (e.g. Home held on the TIMVISION box): push-to-talk. Listening starts now, and
-     * {@link #keyReleased()} ends the phrase when the key comes up.
-     */
-    static void startHeld(AccessibilityService svc) {
-        if (current != null) return;
-        current = new VoiceSession(svc);
-        current.held = true;
-        current.start();
-    }
-
-    /** The held key came up: recognise what was said; released before the recogniser was ready, just close. */
-    static void keyReleased() {
-        VoiceSession s = current;
-        if (s == null || !s.held || !s.listening) return;
-        s.held = false;
-        if (s.ready) s.recognizer.stopListening();
-        else s.done("Tieni premuto mentre parli", null, 1500);
     }
 
     /** Back while the card is up. */
@@ -296,7 +274,6 @@ final class VoiceSession implements RecognitionListener {
     @Override public void onReadyForSpeech(Bundle params) {
         ready = true;
         if (title != null && !title.getText().toString().startsWith("«")) title.setText("Ti ascolto…");
-        if (held && hint != null) hint.setText("Parla tenendo premuto, lascia per eseguire");
     }
     @Override public void onBeginningOfSpeech() { }
     @Override public void onBufferReceived(byte[] buffer) { }
