@@ -89,6 +89,12 @@ public class VoiceCommandsTest {
         assertNull(app("che tempo fa"));
     }
 
+    @Test public void a_cut_first_hypothesis_gives_way_to_the_longer_one() {
+        assertEquals("Apri Sky", VoiceCommands.bestPhrase(Arrays.asList("Apri", "Apri Sky")));   // heard on the box
+        assertEquals("metti Rai 2", VoiceCommands.bestPhrase(Arrays.asList("metti Rai 2", "metti Rai 2 maggio")));
+        assertEquals("Canale 5", VoiceCommands.bestPhrase(Arrays.asList("Canale 5", "di Canale 5")));
+    }
+
     @Test public void without_verb_and_url() {
         assertEquals("netflix", VoiceCommands.withoutVerb("Metti Netflix"));
         assertEquals("spotify", VoiceCommands.withoutVerb("passa a spotify"));

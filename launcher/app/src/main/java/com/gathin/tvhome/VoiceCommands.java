@@ -117,6 +117,26 @@ final class VoiceCommands {
         return withoutVerb(s).replaceFirst("^(?:vai |torna )?(?:alla |al |a |la |il |lo |l )", "");
     }
 
+    /** A first hypothesis that is only a verb (and its preposition or article): the phrase was cut. */
+    private static final Pattern CUT = Pattern.compile(
+            "^(?:apri(?:mi)?|avvia|lancia|metti(?:mi)?|guarda|cerca(?:mi)?|trova|vai|passa|sintonizza)(?: (?:su|sul|a|al|alla|il|la|lo|l))?$");
+
+    /**
+     * The phrase to act on: the recogniser's first hypothesis, unless it is only a verb and a longer one starts with it. A push-to-talk
+     * release can cut the phrase, and the recogniser then ranks the cut "Apri" above "Apri Sky".
+     */
+    static String bestPhrase(java.util.List<String> heard) {
+        String first = heard.get(0);
+        String norm = normalize(first);
+        if (!CUT.matcher(norm).matches()) return first;     // a complete phrase: an extension is noise ("… maggio")
+        String best = first;
+        for (String h : heard) {
+            String n = normalize(h);
+            if (n.length() > normalize(best).length() && n.startsWith(norm + " ")) best = h;
+        }
+        return best;
+    }
+
     /** The search text without a dangling preposition: the recogniser sometimes drops the final "YouTube"
      *  ("cerca recensione galaxy fold 8 su"). */
     static String searchText(String q) {
