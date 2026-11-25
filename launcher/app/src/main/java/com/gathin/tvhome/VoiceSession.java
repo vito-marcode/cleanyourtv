@@ -399,8 +399,24 @@ final class VoiceSession implements RecognitionListener {
         }
     }
 
-    /** Opens the app on a search for the text when it takes Android's standard search (RaiPlay does); otherwise opens it. */
+    /**
+     * Search links for apps without Android's standard search, "%s" the encoded text. Netflix: nflx:// takes any path
+     * (its https filters do not take /search); not checked against a subscription yet.
+     */
+    private static final String[][] APP_SEARCH_LINKS = {
+            {"com.netflix.ninja", "nflx://www.netflix.com/search?q=%s"},
+    };
+
+    /** Opens the app on a search for the text when it takes Android's standard search (RaiPlay does) or has a known
+     *  search link (Netflix); otherwise opens it. */
     private Result searchIn(VoiceCommands.App app, String query) {
+        for (String[] link : APP_SEARCH_LINKS) {
+            if (!link[0].equals(app.pkg)) continue;
+            Intent view = new Intent(Intent.ACTION_VIEW, Uri.parse(String.format(link[1], Uri.encode(query))))
+                    .setPackage(app.pkg).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            if (svc.getPackageManager().resolveActivity(view, 0) != null)
+                return new Result("Cerco «" + query + "»", "su " + app.label, () -> start(view), true);
+        }
         Intent search = new Intent(Intent.ACTION_SEARCH).setPackage(app.pkg)
                 .putExtra(android.app.SearchManager.QUERY, query).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if (svc.getPackageManager().queryIntentActivities(search, 0).isEmpty()) return openApp(app);
