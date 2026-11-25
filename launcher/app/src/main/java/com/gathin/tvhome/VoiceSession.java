@@ -272,7 +272,7 @@ final class VoiceSession implements RecognitionListener {
 
     /** Worker thread: what the phrase asks for, and the main-thread step that does it. */
     private Result decide(List<String> heard) {
-        String first = heard.get(0);
+        String first = VoiceCommands.bestPhrase(heard);
         VoiceCommands.Command cmd = VoiceCommands.parse(first);
         switch (cmd.kind) {
             case ACTION:
