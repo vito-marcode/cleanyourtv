@@ -358,7 +358,7 @@ final class RemoteKeys {
     static boolean isAction(String target) {
         switch (target) {
             case "back": case "home": case "recents": case "mute": case "sleep":
-            case "screensaver": case "settings": case "wifi": case "library": case "ignore": case "voice":
+            case "screensaver": case "settings": case "wifi": case "library": case "ignore": case "voice": case "launcher":
                 return true;
             default:
                 return false;
@@ -405,6 +405,13 @@ final class RemoteKeys {
             case "voice":
                 // The mic's voice command (VoiceSession); InputKeyService starts it on the press instead.
                 if (ctx instanceof AccessibilityService) VoiceSession.toggle((AccessibilityService) ctx);
+                break;
+            case "launcher":
+                // This launcher's home screen, as HomeKeyService opens it for Home: lets "KEYCODE_HOME:launcher" keep the
+                // tap while "hold:KEYCODE_HOME:voice" (or another hold entry) takes the long press.
+                if (ctx instanceof HomeKeyService) ((HomeKeyService) ctx).openHome();
+                else start(ctx, new Intent(ctx, MainActivity.class).addCategory(Intent.CATEGORY_HOME)
+                        .addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED));
                 break;
             default:
                 break;   // "ignore", or "sleep" below Android 9: consumed, nothing to do

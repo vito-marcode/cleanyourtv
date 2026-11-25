@@ -449,7 +449,8 @@ public class HomeKeyService extends AccessibilityService {
         return upTime - downTime < longPressTimeout;
     }
 
-    private void openHome() {
+    /** Also the "launcher" action word (RemoteKeys), so a Home key with a "hold:" entry keeps this on its tap. */
+    void openHome() {
         Intent open = stockHomeStays() ? new Intent(this, MainActivity.class)
                 : new Intent(Intent.ACTION_MAIN).setPackage(getPackageName());
         startActivity(open.addCategory(Intent.CATEGORY_HOME)
