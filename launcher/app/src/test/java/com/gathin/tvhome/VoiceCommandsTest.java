@@ -48,6 +48,20 @@ public class VoiceCommandsTest {
                 parse("Cerca recensione Samsung Galaxy Fold 8 su"));   // heard on the box, "YouTube" dropped
     }
 
+    @Test public void music_search_goes_to_spotify() {
+        assertEquals("MUSIC_SEARCH:vasco rossi", parse("Vasco Rossi su Spotify"));     // heard on the box: only opened Spotify
+        assertEquals("MUSIC_SEARCH:883", parse("883 su Spotify"));
+        assertEquals("MUSIC_SEARCH:gli 883", parse("metti gli 883 su Spotify"));
+        assertEquals("OPEN:spotify", parse("apri Spotify"));
+    }
+
+    @Test public void search_in_a_named_app() {
+        assertEquals("montalbano|rai play", String.join("|", VoiceCommands.inApp("Montalbano su Rai Play")));   // was Rai 1
+        assertEquals("doc|raiplay", String.join("|", VoiceCommands.inApp("cerca Doc su RaiPlay")));
+        assertNull(VoiceCommands.inApp("vai su Netflix"));
+        assertNull(VoiceCommands.inApp("metti Rai 2"));
+    }
+
     @Test public void open_and_watch() {
         assertEquals("OPEN:netflix", parse("Apri Netflix"));
         assertEquals("OPEN:spotify", parse("avvia l'app Spotify"));
