@@ -25,7 +25,11 @@ import java.util.regex.Pattern;
  */
 final class VoiceCommands {
 
-    enum Kind { ACTION, VIDEO_SEARCH, OPEN, WATCH, NAME, NONE }
+    enum Kind { ACTION, VIDEO_SEARCH, MUSIC_SEARCH, OPEN, WATCH, NAME, NONE }
+
+    /** "vasco rossi su spotify", "metti gli 883 su spotify": a Spotify search (spotify:search:, which plays the top hit). */
+    private static final Pattern MUSIC = Pattern.compile(
+            "^(?:(?:cerca(?:mi)?|metti(?:mi)?|ascolta|riproduci|suona|fammi sentire)\\s+)?(.+?)\\s+(?:su|in|con)\\s+(?:spotify|spotifai)$");
 
     /** A leading channel verb: the phrase asks for a channel first (WATCH), not an app (NAME). */
     private static final Pattern CHANNEL_VERB = Pattern.compile(
@@ -97,7 +101,9 @@ final class VoiceCommands {
         if (action == null) action = action(bareAction(s));   // "metti la home", "metti muto", "vai alla home"
         if (action != null) return new Command(Kind.ACTION, action);
 
-        Matcher m = VIDEO_AFTER.matcher(s);
+        Matcher m = MUSIC.matcher(s);
+        if (m.matches()) return new Command(Kind.MUSIC_SEARCH, searchText(m.group(1)));
+        m = VIDEO_AFTER.matcher(s);
         if (m.matches()) return new Command(Kind.VIDEO_SEARCH, searchText(m.group(1)));
         m = VIDEO.matcher(s);
         if (m.matches()) return new Command(Kind.VIDEO_SEARCH, searchText(m.group(1)));
@@ -119,6 +125,20 @@ final class VoiceCommands {
     /** The phrase without a leading verb and article: "metti la home" -> "home", so it is never taken for a channel. */
     static String bareAction(String s) {
         return withoutVerb(s).replaceFirst("^(?:vai |torna )?(?:alla |al |a |la |il |lo |l )", "");
+    }
+
+    /** "montalbano su rai play", "cerca doc su raiplay": what to look for, and in which app (by its spoken name). */
+    private static final Pattern IN_APP = Pattern.compile(
+            "^(?:(?:cerca(?:mi)?|trova(?:mi)?|metti(?:mi)?|guarda|riproduci|ascolta|apri)\\s+)?(.+?)\\s+(?:su|sul|in|con)\\s+(.+)$");
+    private static final Pattern VERB_ONLY = Pattern.compile("^(?:vai|torna|passa|metti|apri|cerca|guarda)$");
+
+    /** {search text, app name} for "<something> su <app>", or null. The caller checks the app is installed. */
+    static String[] inApp(String phrase) {
+        Matcher m = IN_APP.matcher(normalize(phrase));
+        if (!m.matches()) return null;
+        String q = searchText(m.group(1));
+        if (q.isEmpty() || VERB_ONLY.matcher(q).matches()) return null;     // "vai su netflix" opens Netflix instead
+        return new String[]{q, m.group(2)};
     }
 
     /** A first hypothesis that is only a verb (and its preposition or article): the phrase was cut. */

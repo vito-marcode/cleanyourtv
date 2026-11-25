@@ -61,6 +61,9 @@ final class VoiceSession implements RecognitionListener {
             "com.teamsmart.videomanager.tv", "com.liskovsoft.smarttubetv.beta", "com.liskovsoft.smarttubetv",
             "com.google.android.youtube.tv"};
 
+    /** Where a music search goes (spotify:search:). */
+    private static final String[] MUSIC_APPS = {"com.spotify.tv.android", "com.spotify.music"};
+
     private static VoiceSession current;
     private static long downAt;
     /** The last key event handled: HomeKeyService and InputKeyService both get every key when both are enabled. */
@@ -299,6 +302,12 @@ final class VoiceSession implements RecognitionListener {
     private Result decide(List<String> heard) {
         String first = VoiceCommands.bestPhrase(heard);
         VoiceCommands.Command cmd = VoiceCommands.parse(first);
+        // "<something> su <app>": that app, searching for it when the app takes a search (before any channel lookup)
+        if (cmd.kind == VoiceCommands.Kind.NAME || cmd.kind == VoiceCommands.Kind.WATCH || cmd.kind == VoiceCommands.Kind.OPEN) {
+            String[] in = VoiceCommands.inApp(first);
+            VoiceCommands.App app = in == null ? null : VoiceCommands.findApp(in[1], apps());
+            if (app != null) return searchIn(app, in[0]);
+        }
         switch (cmd.kind) {
             case ACTION:
                 return action(cmd.arg);
@@ -308,6 +317,13 @@ final class VoiceSession implements RecognitionListener {
                 Intent view = new Intent(Intent.ACTION_VIEW, Uri.parse(VoiceCommands.youtubeSearchUrl(cmd.arg)))
                         .setPackage(pkg).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 return new Result("Cerco «" + cmd.arg + "»", "su YouTube", () -> start(view), true);
+            }
+            case MUSIC_SEARCH: {
+                String pkg = firstInstalled(MUSIC_APPS);
+                if (pkg == null) return fail("Spotify non è installato");
+                Intent view = new Intent(Intent.ACTION_VIEW, Uri.parse("spotify:search:" + Uri.encode(cmd.arg)))
+                        .setPackage(pkg).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                return new Result("Cerco «" + cmd.arg + "»", "su Spotify", () -> start(view), true);
             }
             case OPEN: {
                 VoiceCommands.App app = VoiceCommands.findApp(cmd.arg, apps());
@@ -371,6 +387,14 @@ final class VoiceSession implements RecognitionListener {
             case "recents": return new Result("App recenti", null, () -> RemoteKeys.launch(svc, "recents"), true);
             default: return fail("Non ho capito");
         }
+    }
+
+    /** Opens the app on a search for the text when it takes Android's standard search (RaiPlay does); otherwise opens it. */
+    private Result searchIn(VoiceCommands.App app, String query) {
+        Intent search = new Intent(Intent.ACTION_SEARCH).setPackage(app.pkg)
+                .putExtra(android.app.SearchManager.QUERY, query).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (svc.getPackageManager().queryIntentActivities(search, 0).isEmpty()) return openApp(app);
+        return new Result("Cerco «" + query + "»", "su " + app.label, () -> start(search), true);
     }
 
     private Result openApp(VoiceCommands.App app) {
