@@ -3,6 +3,7 @@ package com.gathin.tvhome;
 import android.Manifest;
 import android.accessibilityservice.AccessibilityService;
 import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -20,6 +21,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.speech.RecognitionListener;
+import android.speech.RecognitionService;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
@@ -61,6 +63,9 @@ final class VoiceSession implements RecognitionListener {
 
     private static VoiceSession current;
     private static long downAt;
+    /** The last key event handled: HomeKeyService and InputKeyService both get every key when both are enabled. */
+    private static long lastEventTime = -1;
+    private static int lastAction = -1;
 
     private final AccessibilityService svc;
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -87,6 +92,9 @@ final class VoiceSession implements RecognitionListener {
 
     /** The mic key from InputKeyService: a press starts a session, or ends the phrase of the one listening. */
     static boolean onKey(AccessibilityService svc, KeyEvent event) {
+        if (event.getEventTime() == lastEventTime && event.getAction() == lastAction) return true;   // the other service's copy
+        lastEventTime = event.getEventTime();
+        lastAction = event.getAction();
         Log.i(TAG, "key " + KeyEvent.keyCodeToString(event.getKeyCode()) + (event.getAction() == KeyEvent.ACTION_DOWN
                 ? " down repeat=" + event.getRepeatCount() : " up after " + (event.getEventTime() - downAt) + " ms"));
         if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
@@ -124,7 +132,9 @@ final class VoiceSession implements RecognitionListener {
             done("Riconoscimento vocale non disponibile", null, 3000);
             return;
         }
-        recognizer = SpeechRecognizer.createSpeechRecognizer(svc);
+        ComponentName google = googleRecognizer(svc);
+        recognizer = google != null ? SpeechRecognizer.createSpeechRecognizer(svc, google)
+                : SpeechRecognizer.createSpeechRecognizer(svc);
         recognizer.setRecognitionListener(this);
         recognizer.startListening(new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
                 .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
@@ -133,6 +143,20 @@ final class VoiceSession implements RecognitionListener {
                 .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
                 .putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, svc.getPackageName()));
         listening = true;
+    }
+
+    /**
+     * The Google app's online recogniser (com.google.android.katniss), whose class name differs between versions,
+     * when installed. Some firmware makes Google TTS's on-device recogniser the default, which may lack Italian.
+     */
+    private static ComponentName googleRecognizer(Context ctx) {
+        for (ResolveInfo ri : ctx.getPackageManager().queryIntentServices(
+                new Intent(RecognitionService.SERVICE_INTERFACE), 0)) {
+            if (ri.serviceInfo != null && "com.google.android.katniss".equals(ri.serviceInfo.packageName)) {
+                return new ComponentName(ri.serviceInfo.packageName, ri.serviceInfo.name);
+            }
+        }
+        return null;
     }
 
     private void stopRecognizer() {

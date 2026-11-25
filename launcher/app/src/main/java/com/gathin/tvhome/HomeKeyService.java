@@ -262,6 +262,16 @@ public class HomeKeyService extends AccessibilityService {
                 && event.getKeyCode() != KeyEvent.KEYCODE_POWER && event.getKeyCode() != KeyEvent.KEYCODE_WAKEUP) {
             powerOnUntil = 0;
         }
+        // Voice command card up: Back closes it. A key mapped to "voice" acts on its press (VoiceSession), as in
+        // InputKeyService; with both services enabled VoiceSession skips the second copy of each event.
+        if (VoiceSession.active() && event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+            if (event.getAction() == KeyEvent.ACTION_UP) VoiceSession.cancel();
+            return true;
+        }
+        if (VoiceSession.TARGET.equals(appScancodes.get(event.getScanCode()))
+                || VoiceSession.TARGET.equals(appKeys.get(event.getKeyCode()))) {
+            return VoiceSession.onKey(this, event);
+        }
         if (consumeVolumeKeys && VolumeKeys.handle(this, event)) return true;
         // A scancode entry is more specific than any keycode, so it goes first.
         if (RemoteKeys.handle(this, event, inFront(appScancodes, frontAppScancodes, event.getScanCode()),
