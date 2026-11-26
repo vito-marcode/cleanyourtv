@@ -4,16 +4,22 @@ Una funzione non ufficiale, aggiunta sopra il launcher di CleanYourTV: si preme 
 in qualsiasi app, e si dà un comando a voce in italiano. In basso compare una finestrella "Ti ascolto…"; l'app sotto
 continua a funzionare. Il riconoscimento è quello di Google già presente sulla TV.
 
-Provato su un box TIM (Android 8). **Non ancora provato su una TV TCL**: vedi [Limiti](#limiti).
+Provato su due box TIM: Android 8 (tasto microfono) e Android 12 (pressione lunga di Home, perché lì il tasto Google
+va sempre all'Assistente). **Non ancora provato su una TV TCL**: vedi [Limiti](#limiti).
 
 ## Cosa si può dire
 
 | Esempio | Cosa fa |
 |---|---|
-| "cerca gatti", "cerca gatti su YouTube", "YouTube ricette di pasta" | Apre **SmartTube** sui risultati della ricerca (il primo video è già selezionato: OK per guardarlo). Senza SmartTube apre YouTube. |
-| "apri Netflix", "apri Spotify", "metti Prime Video" | Apre l'app installata con quel nome ("YouTube" apre SmartTube) |
+| "gattini su YouTube", "cerca gatti su YouTube", "cerca un video di Vasco Rossi" | Apre **SmartTube** sui risultati (il primo video è già selezionato: OK per guardarlo). Senza SmartTube apre YouTube. |
+| "Vasco Rossi su Spotify", "metti gli 883 su Spotify" | **Spotify** cerca e avvia il primo risultato |
+| "Montalbano su RaiPlay", "cerca Doc su RaiPlay" | Cerca dentro l'app nominata, se accetta la ricerca di Android (RaiPlay sì). Netflix: apre la sua ricerca. Le altre app (Mediaset Infinity) si aprono soltanto |
+| "cerca Montalbano" (senza app) | La **ricerca di Google** della TV, con risultati da tutte le app |
+| "apri Netflix", "Sky", "metti Prime Video" | Apre l'app installata con quel nome ("YouTube" apre SmartTube). Una parola da sola apre l'app, se c'è |
 | "vai alla home", "indietro", "impostazioni", "salvaschermo" | Le azioni del telecomando |
 | "muto", "alza il volume", "abbassa il volume", "volume al massimo", "volume a metà", "volume a 8" | Il volume (ogni comando di volume toglie anche il muto) |
+
+Mentre ascolta, il volume si abbassa e torna com'era subito dopo.
 
 Come si usa: **premi il microfono, lascialo e parla**. La frase finisce quando smetti di parlare, oppure premendo
 di nuovo il microfono. Indietro chiude la finestrella. Se un telecomando trasmette l'audio solo a tasto premuto,
@@ -74,8 +80,10 @@ vedi `tools/docker-build.md`), con la TV raggiungibile via ADB.
 ## Limiti
 
 - **Il tasto microfono può essere riservato a Google Assistant.** Su molte TV certificate Google il sistema lo prende
-  prima del launcher e la finestrella non compare. In quel caso usa un altro tasto, per esempio la pressione lunga di un
-  tasto colorato: `"hold:KEYCODE_PROG_RED:voice"` (il tocco breve resta com'era). Se `getevent` non mostra niente
+  prima del launcher e la finestrella non compare. In quel caso usa la pressione lunga di un altro tasto, per esempio
+  Home: `"KEYCODE_HOME:launcher"` e `"hold:KEYCODE_HOME:voice"` (il tocco di Home apre la home come prima; tenendolo
+  mezzo secondo compare "Ti ascolto…": a quel punto lascialo e parla). Oppure un tasto colorato:
+  `"hold:KEYCODE_PROG_RED:voice"`. Se `getevent` non mostra niente
   quando premi il microfono, il tasto viaggia per un'altra strada (per esempio solo verso Google) e va usato un altro tasto.
 - **Android 11 e successivi non sono provati.** Dalla home dovrebbe funzionare; con un'altra app in primo piano Google
   potrebbe rifiutare di registrare per conto del launcher ("Microfono non autorizzato").
